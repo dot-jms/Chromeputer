@@ -453,7 +453,7 @@
   <section>
     <h2><span class="icon">🧠</span>Memory</h2>
     <div class="row">
-      <input type="range" id="ramSlider" min="16" max="4096" step="16" value="256">
+      <input type="range" id="ramSlider" min="16" max="2047" step="1" value="256">
       <span class="ram-display" id="ramDisplay">256 MB</span>
     </div>
     <div class="preset-row">
@@ -461,14 +461,14 @@
       <button class="preset-btn active" data-ram="256">256MB</button>
       <button class="preset-btn" data-ram="512">512MB</button>
       <button class="preset-btn" data-ram="1024">1GB</button>
-      <button class="preset-btn" data-ram="2048">2GB</button>
-      <button class="preset-btn" data-ram="4096">4GB</button>
+      <button class="preset-btn" data-ram="1536">1.5GB</button>
+      <button class="preset-btn" data-ram="2047">~2GB</button>
     </div>
     <div class="row" style="margin-top:12px">
       <label style="flex:1;margin:0">Exact MB</label>
-      <input type="number" id="ramExact" min="16" max="8192" step="1" value="256" style="width:96px">
+      <input type="number" id="ramExact" min="16" max="2047" step="1" value="256" style="width:96px">
     </div>
-    <div class="hint">Not capped at 2GB — that limit only affects disk image buffers, not emulated RAM. Rounded to a power of 2 internally.</div>
+    <div class="hint"><b>Hard cap: 2047MB.</b> v86's core hits a 32-bit signed-integer overflow at exactly 2048MB (2³¹ bytes) — RAM at or above that boots to a black screen with no error. This isn't a browser/ArrayBuffer limit and can't be configured around; 2047MB is the real ceiling.</div>
   </section>
 
   <section>
@@ -633,14 +633,14 @@ function updateSliderFill(el) {
 }
 function syncRamUI(mb, source) {
   ramDisplay.textContent = formatMB(mb);
-  if (source !== "slider") { ramSlider.value = Math.min(mb, 4096); updateSliderFill(ramSlider); }
+  if (source !== "slider") { ramSlider.value = Math.min(mb, 2047); updateSliderFill(ramSlider); }
   if (source !== "exact") ramExact.value = mb;
   presetBtns.forEach(b => b.classList.toggle("active", Number(b.dataset.ram) === mb));
 }
 ramSlider.addEventListener("input", () => { syncRamUI(Number(ramSlider.value), "slider"); updateSliderFill(ramSlider); });
 ramExact.addEventListener("input", () => {
   let v = Number(ramExact.value) || 16;
-  v = Math.max(16, Math.min(8192, v));
+  v = Math.max(16, Math.min(2047, v));
   syncRamUI(v, "exact");
 });
 presetBtns.forEach(b => b.addEventListener("click", () => syncRamUI(Number(b.dataset.ram))));
@@ -769,8 +769,8 @@ async function startEmulator() {
 
   try {
     const ramMB = Number(ramExact.value) || 256;
-    const memory_size = nextPow2(ramMB * 1024 * 1024);
-    log(`RAM: ${ramMB} MB requested \u2192 ${(memory_size / 1024 / 1024)} MB allocated (power of 2)`);
+    const memory_size = alignMemorySize(ramMB * 1024 * 1024);
+    log(`RAM: ${ramMB} MB requested \u2192 ${(memory_size / 1024 / 1024).toFixed(1)} MB allocated (128KB-aligned)`);
 
     const config = {
       wasm_path: "build/v86.wasm",
@@ -855,10 +855,16 @@ async function startEmulator() {
   }
 }
 
-function nextPow2(n) {
-  let p = 1;
-  while (p < n) p *= 2;
-  return p;
+/* v86 only requires memory_size to be aligned to its 128KB MMAP_BLOCK_SIZE,
+   not a power of 2 (that d.ts comment is stale/overly conservative) — see
+   cpu.js's actual rounding: `((size - 1) | (MMAP_BLOCK_SIZE - 1)) + 1`.
+   Rounding to a power of 2 was overshooting past the 2047MB hard ceiling
+   even for "safe" requests like 1200MB, which is why the RAM slider is
+   now capped at 2047MB in the UI as well — this alignment alone doesn't
+   dodge the 2048MB signed-overflow wall, it just stops overshooting into it. */
+function alignMemorySize(bytes) {
+  const BLOCK = 128 * 1024;
+  return Math.ceil(bytes / BLOCK) * BLOCK;
 }
 
 function startStats() {
