@@ -7,32 +7,49 @@
 <script src="build/libv86.js"></script>
 <style>
   :root {
-    --bg: #0d1117;
-    --panel: #161b22;
-    --border: #30363d;
-    --text: #c9d1d9;
-    --muted: #8b949e;
-    --accent: #58a6ff;
-    --accent-dim: #1f6feb;
-    --good: #3fb950;
-    --warn: #d29922;
-    --bad: #f85149;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --bg: #0a0c10;
+    --bg-elev: #12151b;
+    --panel: #15181f;
+    --panel-2: #1b1f27;
+    --border: #262b34;
+    --border-soft: #1e222a;
+    --text: #e6e8eb;
+    --text-dim: #a8adb5;
+    --muted: #6b7280;
+    --accent: #7c9eff;
+    --accent-strong: #5b7fff;
+    --accent-glow: rgba(124, 158, 255, 0.15);
+    --good: #4ade80;
+    --warn: #fbbf24;
+    --bad: #f87171;
+    --radius: 10px;
+    --radius-sm: 7px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   }
   * { box-sizing: border-box; }
+  ::selection { background: var(--accent-glow); }
+  html, body { height: 100%; }
   body {
     margin: 0;
-    background: var(--bg);
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(124,158,255,0.06), transparent),
+      var(--bg);
     color: var(--text);
     display: flex;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2a2f39; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #363c48; }
+
   #sidebar {
-    width: 380px;
-    min-width: 380px;
-    background: var(--panel);
-    border-right: 1px solid var(--border);
-    padding: 16px;
+    width: 400px;
+    min-width: 400px;
+    background: linear-gradient(180deg, var(--panel), var(--bg-elev));
+    border-right: 1px solid var(--border-soft);
+    padding: 20px;
     overflow-y: auto;
     height: 100vh;
     position: sticky;
@@ -43,234 +60,398 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 24px;
+    justify-content: center;
+    padding: 32px;
     min-width: 0;
+    position: relative;
   }
-  h1 {
-    font-size: 15px;
-    margin: 0 0 4px 0;
-    color: var(--text);
+
+  .brand {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    margin-bottom: 2px;
+  }
+  .brand-icon {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent-strong), #9b7cff);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(91,127,255,0.35);
+  }
+  h1 {
+    font-size: 16px;
+    margin: 0;
+    color: var(--text);
+    font-weight: 650;
+    letter-spacing: -0.01em;
   }
   .subtitle {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--muted);
-    margin-bottom: 18px;
+    margin: 4px 0 22px 40px;
+    line-height: 1.4;
   }
+
   section {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 14px;
     margin-bottom: 12px;
-    background: #0d1117;
+    background: rgba(255,255,255,0.015);
+    transition: border-color 0.15s;
   }
   section h2 {
-    font-size: 11px;
+    font-size: 10.5px;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.08em;
     color: var(--muted);
-    margin: 0 0 10px 0;
-    font-weight: 600;
+    margin: 0 0 12px 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
+  section h2 .icon { font-size: 12px; opacity: 0.9; }
+
   label {
     display: block;
-    font-size: 12px;
-    margin-bottom: 6px;
-    color: var(--text);
+    font-size: 12.5px;
+    margin-bottom: 7px;
+    color: var(--text-dim);
+    font-weight: 500;
   }
   .row {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 11px;
   }
   .row:last-child { margin-bottom: 0; }
+
   input[type=range] {
     flex: 1;
-    accent-color: var(--accent);
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent) var(--fill,50%), #262b34 var(--fill,50%));
+    outline: none;
   }
-  input[type=number], input[type=text], select {
-    background: #010409;
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 6px;
-    padding: 5px 8px;
-    font-size: 12px;
-    width: 100%;
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 3px var(--accent-glow), 0 2px 6px rgba(0,0,0,0.4);
+    cursor: pointer;
+    margin-top: -0.5px;
   }
-  input[type=file] {
-    font-size: 11px;
-    color: var(--muted);
-    width: 100%;
-  }
-  .ram-display {
-    font-variant-numeric: tabular-nums;
-    font-size: 12px;
-    color: var(--accent);
-    min-width: 62px;
-    text-align: right;
-    font-weight: 600;
-  }
-  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-  .preset-btn {
-    flex: 1;
-    background: #010409;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    border-radius: 5px;
-    padding: 4px 0;
-    font-size: 10.5px;
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
+    box-shadow: 0 0 0 3px var(--accent-glow);
     cursor: pointer;
   }
+
+  input[type=number], input[type=text], select {
+    background: #0a0c10;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font-size: 12.5px;
+    width: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input[type=number]:focus, input[type=text]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+  input:disabled, select:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .file-drop {
+    position: relative;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    background: rgba(255,255,255,0.01);
+  }
+  .file-drop:hover, .file-drop.dragover {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+  .file-drop input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .file-drop .fd-icon { font-size: 18px; margin-bottom: 4px; opacity: 0.75; }
+  .file-drop .fd-text { font-size: 11.5px; color: var(--text-dim); font-weight: 500; }
+  .file-drop .fd-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .ram-display {
+    font-variant-numeric: tabular-nums;
+    font-size: 12.5px;
+    color: var(--accent);
+    min-width: 58px;
+    text-align: right;
+    font-weight: 650;
+  }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .preset-btn {
+    flex: 1;
+    background: #0a0c10;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 5px 0;
+    font-size: 10.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
   .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .preset-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.1); }
-  .tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+  .preset-btn.active {
+    border-color: var(--accent);
+    color: #fff;
+    background: var(--accent-strong);
+    box-shadow: 0 2px 8px rgba(91,127,255,0.3);
+  }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; background: #0a0c10; padding: 3px; border-radius: 8px; border: 1px solid var(--border-soft); }
   .tab {
     flex: 1;
     text-align: center;
     padding: 6px 0;
-    font-size: 11px;
-    border: 1px solid var(--border);
+    font-size: 11.5px;
+    font-weight: 600;
     border-radius: 6px;
     cursor: pointer;
     color: var(--muted);
-    background: #010409;
+    transition: all 0.15s;
   }
-  .tab.active { color: var(--accent); border-color: var(--accent); background: rgba(88,166,255,0.08); }
+  .tab.active { color: #fff; background: var(--panel-2); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
   .tabpane { display: none; }
-  .tabpane.active { display: block; }
-  .hint { font-size: 10.5px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+  .tabpane.active { display: block; animation: fadein 0.15s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+
+  .hint { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .hint b { color: var(--text-dim); }
+
   button.action {
     width: 100%;
-    padding: 9px;
+    padding: 11px;
     border: none;
-    border-radius: 6px;
-    background: var(--accent-dim);
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--accent-strong), #6a5cff);
     color: white;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 13.5px;
+    font-weight: 650;
     cursor: pointer;
-    margin-top: 4px;
+    margin-top: 2px;
+    box-shadow: 0 4px 16px rgba(91,127,255,0.28);
+    transition: transform 0.1s, box-shadow 0.15s;
   }
-  button.action:hover { background: var(--accent); }
-  button.action:disabled { background: #21262d; color: var(--muted); cursor: not-allowed; }
+  button.action:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(91,127,255,0.4); }
+  button.action:active { transform: translateY(0); }
+  button.action:disabled {
+    background: #21262d; color: var(--muted); cursor: not-allowed;
+    box-shadow: none; transform: none;
+  }
+
   .btn-row { display: flex; gap: 8px; margin-top: 8px; }
   .btn-row button {
     flex: 1;
-    padding: 7px;
+    padding: 8px 6px;
     border: 1px solid var(--border);
-    border-radius: 6px;
-    background: #010409;
-    color: var(--text);
+    border-radius: var(--radius-sm);
+    background: #0a0c10;
+    color: var(--text-dim);
     font-size: 11.5px;
+    font-weight: 550;
     cursor: pointer;
+    transition: all 0.12s;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
   }
-  .btn-row button:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-row button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-row button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+  .btn-row button:disabled { opacity: 0.35; cursor: not-allowed; }
+
   .status-line {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 11.5px;
-    color: var(--muted);
-    margin-top: 10px;
+    gap: 7px;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 12px;
+    font-weight: 500;
   }
   .dot {
     width: 7px; height: 7px; border-radius: 50%;
     background: var(--muted);
     flex-shrink: 0;
+    box-shadow: 0 0 0 3px transparent;
+    transition: all 0.2s;
   }
-  .dot.ready { background: var(--good); }
-  .dot.busy { background: var(--warn); animation: pulse 1s infinite; }
-  .dot.error { background: var(--bad); }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .dot.ready { background: var(--good); box-shadow: 0 0 0 3px rgba(74,222,128,0.15); }
+  .dot.busy { background: var(--warn); animation: pulse 1s infinite; box-shadow: 0 0 0 3px rgba(251,191,36,0.15); }
+  .dot.error { background: var(--bad); box-shadow: 0 0 0 3px rgba(248,113,113,0.15); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
   #log {
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-family: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 10.5px;
     color: var(--muted);
-    max-height: 130px;
+    max-height: 140px;
     overflow-y: auto;
     white-space: pre-wrap;
     word-break: break-word;
-    line-height: 1.5;
+    line-height: 1.6;
+    margin-top: 10px;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 10px;
   }
+  #log:empty { display: none; }
   #log .err { color: var(--bad); }
   #log .ok { color: var(--good); }
+
   progress {
     width: 100%;
-    height: 5px;
-    accent-color: var(--accent);
-    margin-top: 6px;
+    height: 4px;
+    margin-top: 8px;
     display: none;
-  }
-
-  #screen_container {
-    background: #000;
-    box-shadow: 0 0 0 1px var(--border), 0 12px 40px rgba(0,0,0,0.5);
-    border-radius: 6px;
+    border-radius: 4px;
     overflow: hidden;
-    line-height: 0;
+    border: none;
   }
-  #screen_container canvas, #screen_container div {
-    image-rendering: pixelated;
-  }
+  progress::-webkit-progress-bar { background: #0a0c10; border-radius: 4px; }
+  progress::-webkit-progress-value { background: linear-gradient(90deg, var(--accent-strong), var(--accent)); border-radius: 4px; }
+
+  /* ---------------- Main viewport ---------------- */
   .top-toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
     max-width: 960px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    font-size: 12px;
   }
-  .top-toolbar .stats {
-    font-size: 11px;
+  #mainTitle { color: var(--text-dim); font-weight: 550; display: flex; align-items: center; gap: 7px; }
+  #mainTitle .dot { width: 6px; height: 6px; }
+  .stats {
     color: var(--muted);
     font-variant-numeric: tabular-nums;
     display: flex;
     gap: 14px;
+    font-weight: 500;
   }
+
+  #screen_wrap {
+    position: relative;
+    background: #000;
+    box-shadow: 0 0 0 1px var(--border), 0 20px 60px rgba(0,0,0,0.55), 0 0 0 6px rgba(255,255,255,0.02);
+    border-radius: 8px;
+    overflow: hidden;
+    line-height: 0;
+    display: none;
+  }
+  #screen_container { line-height: 0; }
+  #screen_container canvas, #screen_container div {
+    image-rendering: pixelated;
+  }
+  #screen_wrap:fullscreen {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0;
+    box-shadow: none;
+    width: 100vw;
+    height: 100vh;
+  }
+  #screen_wrap:fullscreen #screen_container canvas,
+  #screen_wrap:fullscreen #screen_container > div {
+    max-width: 100vw;
+    max-height: 100vh;
+    width: auto;
+    height: auto;
+  }
+  .fs-hint {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    color: #cfd3d9;
+    font-size: 10.5px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  #screen_wrap:hover .fs-hint { opacity: 1; }
+  #screen_wrap:fullscreen .fs-hint { display: none; }
+
   .placeholder {
     width: 720px;
     max-width: 90vw;
     aspect-ratio: 4/3;
-    border: 1px dashed var(--border);
-    border-radius: 8px;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     color: var(--muted);
     font-size: 13px;
     text-align: center;
     padding: 20px;
+    gap: 8px;
+    background: rgba(255,255,255,0.01);
   }
-  a { color: var(--accent); }
-  .small-btn {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    border-radius: 5px;
-    font-size: 10.5px;
-    padding: 3px 7px;
-    cursor: pointer;
-  }
-  .small-btn:hover { color: var(--accent); border-color: var(--accent); }
-  fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin: 0 0 10px 0; }
-  fieldset legend { font-size: 10.5px; color: var(--muted); padding: 0 4px; }
-  .checkrow { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 6px; }
+  .placeholder .ph-icon { font-size: 30px; opacity: 0.5; margin-bottom: 4px; }
+  .placeholder b { color: var(--text-dim); }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  fieldset { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; margin: 10px 0 0 0; }
+  fieldset legend { font-size: 10.5px; color: var(--muted); padding: 0 5px; font-weight: 600; }
+  .checkrow { display: flex; align-items: center; gap: 8px; font-size: 12.5px; margin-bottom: 8px; color: var(--text-dim); }
   .checkrow:last-child { margin-bottom: 0; }
-  .checkrow input { margin: 0; }
+  .checkrow input { margin: 0; accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+  .checkrow label { margin: 0; cursor: pointer; font-weight: 500; }
+
+  .divider-label {
+    font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+    display: flex; align-items: center; gap: 8px; margin: 4px 0 10px 0; font-weight: 700;
+  }
+  .divider-label::after { content: ""; flex: 1; height: 1px; background: var(--border-soft); }
+
+  @media (max-width: 860px) {
+    body { flex-direction: column; }
+    #sidebar { width: 100%; min-width: 0; height: auto; position: static; border-right: none; border-bottom: 1px solid var(--border-soft); }
+    #main { padding: 20px; }
+  }
 </style>
 </head>
 <body>
 
 <div id="sidebar">
-  <h1>🖥️ v86 Emulator</h1>
-  <div class="subtitle">x86 PC in your browser — runs entirely client-side</div>
+  <div class="brand">
+    <div class="brand-icon">🖥️</div>
+    <h1>v86 Emulator</h1>
+  </div>
+  <div class="subtitle">x86 PC in your browser — boots, runs, and persists entirely client-side.</div>
 
   <section>
-    <h2>Memory</h2>
+    <h2><span class="icon">🧠</span>Memory</h2>
     <div class="row">
       <input type="range" id="ramSlider" min="16" max="4096" step="16" value="256">
       <span class="ram-display" id="ramDisplay">256 MB</span>
@@ -283,35 +464,41 @@
       <button class="preset-btn" data-ram="2048">2GB</button>
       <button class="preset-btn" data-ram="4096">4GB</button>
     </div>
-    <div class="row" style="margin-top:10px">
-      <label style="flex:1;margin:0">Or type exact MB:</label>
-      <input type="number" id="ramExact" min="16" max="8192" step="1" value="256" style="width:90px">
+    <div class="row" style="margin-top:12px">
+      <label style="flex:1;margin:0">Exact MB</label>
+      <input type="number" id="ramExact" min="16" max="8192" step="1" value="256" style="width:96px">
     </div>
-    <div class="hint">Emulated RAM is independent of the ~2GB browser ArrayBuffer limit that affects disk images — you can safely go well above 2GB here if your device has the memory to spare. Rounded up to a power of 2 internally.</div>
+    <div class="hint">Not capped at 2GB — that limit only affects disk image buffers, not emulated RAM. Rounded to a power of 2 internally.</div>
   </section>
 
   <section>
-    <h2>Boot Media</h2>
+    <h2><span class="icon">💿</span>Boot Media</h2>
     <div class="tabs">
       <div class="tab active" data-tab="cdrom">CD-ROM (ISO)</div>
       <div class="tab" data-tab="hdd">Hard Disk</div>
     </div>
 
     <div class="tabpane active" id="tab-cdrom">
-      <label>Upload an ISO image</label>
-      <input type="file" id="isoFile" accept=".iso,.img">
-      <div class="hint" id="isoInfo">No ISO selected. You can also boot with no CD if a bootable hard disk is attached.</div>
+      <label class="file-drop" id="isoDrop">
+        <input type="file" id="isoFile" accept=".iso,.img">
+        <div class="fd-icon">📀</div>
+        <div class="fd-text" id="isoText">Drop an ISO or click to browse</div>
+        <div class="fd-sub" id="isoSub">Optional if a bootable hard disk is attached</div>
+      </label>
     </div>
 
     <div class="tabpane" id="tab-hdd">
-      <div class="tabs" style="margin-bottom:8px">
-        <div class="tab active" data-subtab="upload">Upload image</div>
-        <div class="tab" data-subtab="blank">Create blank</div>
+      <div class="tabs" style="margin-bottom:10px">
+        <div class="tab active" data-subtab="upload">Upload</div>
+        <div class="tab" data-subtab="blank">Create Blank</div>
       </div>
       <div class="tabpane active" id="sub-upload">
-        <label>Upload an existing disk image (.img/.raw/.qcow2*)</label>
-        <input type="file" id="hddFile" accept=".img,.raw,.qcow2,.vhd,.vdi,*">
-        <div class="hint" id="hddInfo">*Only raw disk images are supported natively. Large files stream lazily so they won't blow the 2GB ArrayBuffer ceiling.</div>
+        <label class="file-drop" id="hddDrop">
+          <input type="file" id="hddFile" accept=".img,.raw,.qcow2,.vhd,.vdi,*">
+          <div class="fd-icon">🗄️</div>
+          <div class="fd-text" id="hddText">Drop a raw disk image or click to browse</div>
+          <div class="fd-sub" id="hddSub">.img / .raw — streams lazily, no size ceiling</div>
+        </label>
       </div>
       <div class="tabpane" id="sub-blank">
         <label>New disk size</label>
@@ -326,56 +513,63 @@
           <button class="preset-btn" data-blank="20480">20GB</button>
           <button class="preset-btn" data-blank="65536">64GB</button>
         </div>
-        <div class="hint">Built as a sparse lazily-backed image (a Blob composed of zero-chunks) — it does not allocate the full size in memory up front, so even a 64GB "disk" won't crash your tab. It will need formatting/partitioning from within the guest OS, or via an installer on the CD-ROM.</div>
+        <div class="hint">Sparse, lazily-backed — won't allocate the full size in memory. You'll still need to partition/format it from inside the guest OS, and it will use real disk space as you write to it. <b>Export it when you're done</b> (Runtime panel, once running) to keep your setup for next time.</div>
       </div>
     </div>
   </section>
 
   <section>
-    <h2>System</h2>
+    <h2><span class="icon">⚙️</span>System</h2>
     <div class="row">
       <label style="flex:1;margin:0">Boot order</label>
-      <select id="bootOrder" style="width:150px">
+      <select id="bootOrder" style="width:160px">
         <option value="cd">CD-ROM first</option>
         <option value="hd">Hard disk first</option>
       </select>
     </div>
     <div class="checkrow">
-      <input type="checkbox" id="optNetworking">
-      <label style="margin:0" for="optNetworking">Enable networking relay (WSS)</label>
+      <input type="checkbox" id="optAcpi" checked>
+      <label for="optAcpi">ACPI</label>
     </div>
     <div class="checkrow">
-      <input type="checkbox" id="optAcpi" checked>
-      <label style="margin:0" for="optAcpi">ACPI</label>
+      <input type="checkbox" id="optNetworking">
+      <label for="optNetworking">Networking relay (WSS)</label>
     </div>
-    <fieldset style="margin-top:8px">
-      <legend>Networking relay URL (optional)</legend>
-      <input type="text" id="netRelay" placeholder="wss://relay.widgetry.org/" disabled>
+    <fieldset>
+      <legend>Relay URL</legend>
+      <input type="text" id="netRelay" placeholder="wss://relay.example.org/" disabled>
     </fieldset>
   </section>
 
   <section>
-    <button class="action" id="btnStart">▶ Build &amp; Start Emulator</button>
+    <button class="action" id="btnStart">▶  Build &amp; Start Emulator</button>
     <div class="status-line"><span class="dot" id="statusDot"></span><span id="statusText">Idle — configure options above</span></div>
     <progress id="progressBar"></progress>
-    <div id="log" style="margin-top:8px"></div>
+    <div id="log"></div>
   </section>
 
   <section id="runtimeControls" style="display:none">
-    <h2>Runtime</h2>
+    <h2><span class="icon">▶</span>Runtime</h2>
     <div class="btn-row">
       <button id="btnPause">⏸ Pause</button>
       <button id="btnReset">↻ Reset</button>
       <button id="btnFullscreen">⛶ Fullscreen</button>
     </div>
+    <div class="divider-label">Machine state</div>
     <div class="btn-row">
-      <button id="btnSaveState">💾 Save State</button>
-      <button id="btnLoadState">📂 Load State</button>
+      <button id="btnSaveState">💾 Save state</button>
+      <button id="btnLoadState">📂 Load state</button>
       <input type="file" id="stateFile" accept=".bin,.state" style="display:none">
     </div>
+    <div class="divider-label">Hard disk</div>
     <div class="btn-row">
-      <button id="btnEjectCd">⏏ Eject CD</button>
-      <button id="btnSwapCd">🔄 Swap CD</button>
+      <button id="btnExportHda" title="Download the current hard disk contents so you can re-upload it next time">⬇ Export disk image</button>
+    </div>
+    <div class="hint" id="exportHint">Downloads your hard disk exactly as it is right now — reupload it under Boot Media → Hard Disk → Upload next session to pick up where you left off.</div>
+    <div class="divider-label">CD-ROM</div>
+    <div class="btn-row">
+      <button id="btnEjectCd">⏏ Eject</button>
+      <button id="btnSwapCd">🔄 Swap</button>
       <input type="file" id="swapCdFile" accept=".iso,.img" style="display:none">
     </div>
   </section>
@@ -383,13 +577,19 @@
 
 <div id="main">
   <div class="top-toolbar">
-    <div style="font-size:12px;color:var(--muted)" id="mainTitle">No machine running</div>
+    <div id="mainTitle"><span class="dot" id="mainDot"></span>No machine running</div>
     <div class="stats" id="statsBar"></div>
   </div>
-  <div id="placeholder" class="placeholder">Configure your machine on the left, then hit<br><b>Build &amp; Start Emulator</b>.</div>
-  <div id="screen_container" style="display:none">
-    <div style="white-space: pre; font: 14px monospace; line-height: 14px; color: #ccc; padding: 4px;"></div>
-    <canvas style="display:none"></canvas>
+  <div id="placeholder" class="placeholder">
+    <div class="ph-icon">🖥️</div>
+    <div>Configure your machine on the left, then hit<br><b>Build &amp; Start Emulator</b>.</div>
+  </div>
+  <div id="screen_wrap">
+    <div id="screen_container">
+      <div style="white-space: pre; font: 14px monospace; line-height: 14px; color: #ccc; padding: 4px;"></div>
+      <canvas style="display:none"></canvas>
+    </div>
+    <div class="fs-hint" id="fsHint">⛶ Fullscreen · Esc to exit</div>
   </div>
 </div>
 
@@ -400,6 +600,7 @@
 const logEl = document.getElementById("log");
 const statusDot = document.getElementById("statusDot");
 const statusText = document.getElementById("statusText");
+const mainDot = document.getElementById("mainDot");
 const progressBar = document.getElementById("progressBar");
 
 function log(msg, cls) {
@@ -413,6 +614,8 @@ function log(msg, cls) {
 function setStatus(text, state) {
   statusText.textContent = text;
   statusDot.className = "dot" + (state ? " " + state : "");
+  mainDot.className = "dot" + (state ? " " + state : "");
+  document.getElementById("mainTitle").lastChild.textContent = " " + text;
 }
 
 /* ---------------- RAM slider ---------------- */
@@ -424,19 +627,24 @@ const presetBtns = document.querySelectorAll(".preset-btn[data-ram]");
 function formatMB(mb) {
   return mb >= 1024 ? (mb / 1024).toFixed(mb % 1024 === 0 ? 0 : 1) + " GB" : mb + " MB";
 }
+function updateSliderFill(el) {
+  const pct = ((el.value - el.min) / (el.max - el.min)) * 100;
+  el.style.setProperty("--fill", pct + "%");
+}
 function syncRamUI(mb, source) {
   ramDisplay.textContent = formatMB(mb);
-  if (source !== "slider") ramSlider.value = Math.min(mb, 4096);
+  if (source !== "slider") { ramSlider.value = Math.min(mb, 4096); updateSliderFill(ramSlider); }
   if (source !== "exact") ramExact.value = mb;
   presetBtns.forEach(b => b.classList.toggle("active", Number(b.dataset.ram) === mb));
 }
-ramSlider.addEventListener("input", () => syncRamUI(Number(ramSlider.value), "slider"));
+ramSlider.addEventListener("input", () => { syncRamUI(Number(ramSlider.value), "slider"); updateSliderFill(ramSlider); });
 ramExact.addEventListener("input", () => {
   let v = Number(ramExact.value) || 16;
   v = Math.max(16, Math.min(8192, v));
   syncRamUI(v, "exact");
 });
 presetBtns.forEach(b => b.addEventListener("click", () => syncRamUI(Number(b.dataset.ram))));
+updateSliderFill(ramSlider);
 
 /* ---------------- Blank disk size slider ---------------- */
 const blankSlider = document.getElementById("blankSlider");
@@ -448,6 +656,7 @@ function formatMBLarge(mb) {
 function syncBlankUI(mb) {
   blankDisplay.textContent = formatMBLarge(mb);
   blankSlider.value = mb;
+  updateSliderFill(blankSlider);
   blankPresets.forEach(b => b.classList.toggle("active", Number(b.dataset.blank) === mb));
 }
 blankSlider.addEventListener("input", () => syncBlankUI(Number(blankSlider.value)));
@@ -475,29 +684,46 @@ document.querySelectorAll(".tab[data-subtab]").forEach(tab => {
   });
 });
 
-document.getElementById("isoFile").addEventListener("change", e => {
-  const f = e.target.files[0];
-  document.getElementById("isoInfo").textContent = f
-    ? `Selected: ${f.name} (${(f.size / 1024 / 1024).toFixed(1)} MB)`
-    : "No ISO selected.";
-});
-document.getElementById("hddFile").addEventListener("change", e => {
-  const f = e.target.files[0];
-  document.getElementById("hddInfo").textContent = f
-    ? `Selected: ${f.name} (${(f.size / 1024 / 1024).toFixed(1)} MB) — will stream lazily since v86 handles File-backed images natively.`
-    : "No image selected.";
-});
+/* ---------------- File drop zones ---------------- */
+function wireFileDrop(dropId, inputId, textId, formatFn) {
+  const drop = document.getElementById(dropId);
+  const input = document.getElementById(inputId);
+  const textEl = document.getElementById(textId);
+  const defaultText = textEl.textContent;
+
+  input.addEventListener("change", () => {
+    const f = input.files[0];
+    textEl.textContent = f ? formatFn(f) : defaultText;
+    drop.classList.toggle("dragover", false);
+  });
+  ["dragover", "dragenter"].forEach(evt =>
+    drop.addEventListener(evt, e => { e.preventDefault(); drop.classList.add("dragover"); })
+  );
+  ["dragleave", "drop"].forEach(evt =>
+    drop.addEventListener(evt, () => drop.classList.remove("dragover"))
+  );
+  drop.addEventListener("drop", e => {
+    e.preventDefault();
+    if (e.dataTransfer.files[0]) {
+      input.files = e.dataTransfer.files;
+      input.dispatchEvent(new Event("change"));
+    }
+  });
+}
+wireFileDrop("isoDrop", "isoFile", "isoText", f => `${f.name} · ${(f.size/1024/1024).toFixed(1)} MB`);
+wireFileDrop("hddDrop", "hddFile", "hddText", f => `${f.name} · ${(f.size/1024/1024).toFixed(1)} MB`);
+
 document.getElementById("optNetworking").addEventListener("change", e => {
   document.getElementById("netRelay").disabled = !e.target.checked;
 });
 
 /* ---------------- Sparse blank disk image ----------------
    Builds a File-like Blob of the requested size WITHOUT allocating
-   the whole thing as a live ArrayBuffer. We compose it out of a
-   modest number of shared zero-filled chunk Blobs; the browser's
-   Blob storage handles the rest on disk/backing store, not in JS heap.
-   This mirrors the SparseFileBuffer approach used elsewhere in this
-   codebase to dodge the ~2GB ArrayBuffer ceiling. */
+   the whole thing as a live ArrayBuffer. Composed from a shared
+   zero-filled chunk Blob reused by reference; the browser's Blob
+   storage handles the rest, not the JS heap. This mirrors the
+   SparseFileBuffer approach used elsewhere in this codebase to
+   dodge the ~2GB ArrayBuffer ceiling. */
 function makeBlankDiskFile(sizeBytes, name) {
   const CHUNK = 16 * 1024 * 1024; // 16MB shared zero chunk, reused by reference
   const zeroChunk = new Blob([new Uint8Array(CHUNK)]);
@@ -513,6 +739,17 @@ function makeBlankDiskFile(sizeBytes, name) {
     }
   }
   return new File(parts, name, { type: "application/octet-stream" });
+}
+
+function triggerDownload(blobOrFile, filename) {
+  const url = URL.createObjectURL(blobOrFile);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
 }
 
 /* ---------------- Build & start ---------------- */
@@ -585,8 +822,7 @@ async function startEmulator() {
     setStatus("Booting\u2026", "busy");
 
     document.getElementById("placeholder").style.display = "none";
-    document.getElementById("screen_container").style.display = "block";
-    document.getElementById("mainTitle").textContent = "Machine running";
+    document.getElementById("screen_wrap").style.display = "inline-block";
     document.getElementById("runtimeControls").style.display = "block";
 
     emulator = new V86(config);
@@ -652,11 +888,11 @@ document.getElementById("btnPause").addEventListener("click", (e) => {
   if (!emulator) return;
   if (emulator.is_running()) {
     emulator.stop();
-    e.target.textContent = "▶ Resume";
+    e.currentTarget.innerHTML = "▶ Resume";
     setStatus("Paused", "");
   } else {
     emulator.run();
-    e.target.textContent = "⏸ Pause";
+    e.currentTarget.innerHTML = "⏸ Pause";
     setStatus("Running", "ready");
   }
 });
@@ -665,20 +901,32 @@ document.getElementById("btnReset").addEventListener("click", () => {
   emulator.restart();
   log("Machine reset.");
 });
+
+/* Fullscreen: target the wrapper (not the raw screen_container) so our
+   CSS can scale the canvas/text node to fill the screen while keeping
+   its aspect ratio, instead of the browser just centering a tiny
+   native-resolution DOS canvas in a sea of black. */
+const screenWrap = document.getElementById("screen_wrap");
 document.getElementById("btnFullscreen").addEventListener("click", () => {
-  const el = document.getElementById("screen_container");
-  if (el.requestFullscreen) el.requestFullscreen();
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  } else if (screenWrap.requestFullscreen) {
+    screenWrap.requestFullscreen().catch(err => log("Fullscreen failed: " + err.message, "err"));
+  } else {
+    log("Fullscreen is not supported in this browser.", "err");
+  }
 });
+document.addEventListener("fullscreenchange", () => {
+  const btn = document.getElementById("btnFullscreen");
+  btn.innerHTML = document.fullscreenElement ? "⛶ Exit fullscreen" : "⛶ Fullscreen";
+});
+
 document.getElementById("btnSaveState").addEventListener("click", async () => {
   if (!emulator) return;
   log("Saving state\u2026");
   try {
     const state = await emulator.save_state();
-    const blob = new Blob([state]);
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "v86-state.bin";
-    a.click();
+    triggerDownload(new Blob([state]), "v86-state.bin");
     log("State saved.", "ok");
   } catch (err) {
     log("Save failed: " + err.message, "err");
@@ -697,6 +945,52 @@ document.getElementById("stateFile").addEventListener("change", async (e) => {
     log("Restore failed: " + err.message, "err");
   }
 });
+
+/* Export the hard disk exactly as it currently sits, so it can be
+   re-uploaded next session under Boot Media -> Hard Disk -> Upload
+   and picked back up where it was left off. Reaches into v86's
+   internal IDE device (same approach v86's own reference UI uses,
+   since this isn't part of the public V86 wrapper API) to grab the
+   live disk buffer object, then either reconstructs a File from its
+   cached blocks (async/blank-disk images) or reads it whole
+   (small, fully in-memory sync images). */
+document.getElementById("btnExportHda").addEventListener("click", async () => {
+  if (!emulator) return;
+  const btn = document.getElementById("btnExportHda");
+  btn.disabled = true;
+  log("Preparing hard disk export\u2026");
+  try {
+    const ide = emulator.v86 && emulator.v86.cpu && emulator.v86.cpu.devices && emulator.v86.cpu.devices.ide;
+    const buffer = ide && ide.primary && ide.primary.master && ide.primary.master.buffer;
+    if (!buffer) {
+      log("No hard disk attached to export.", "err");
+      return;
+    }
+    const filename = (buffer.file && buffer.file.name) || "v86-hard-disk.img";
+
+    if (typeof buffer.get_as_file === "function") {
+      const file = buffer.get_as_file(filename);
+      triggerDownload(file, filename);
+      log(`Exported ${filename}.`, "ok");
+    } else if (typeof buffer.get_buffer === "function") {
+      buffer.get_buffer((b) => {
+        if (b) {
+          triggerDownload(new Blob([b]), filename);
+          log(`Exported ${filename}.`, "ok");
+        } else {
+          log("Export failed \u2014 disk image may be too large to read back in one piece.", "err");
+        }
+      });
+    } else {
+      log("This disk buffer type doesn't support export.", "err");
+    }
+  } catch (err) {
+    log("Export failed: " + err.message, "err");
+  } finally {
+    btn.disabled = false;
+  }
+});
+
 document.getElementById("btnEjectCd").addEventListener("click", () => {
   if (!emulator) return;
   emulator.eject_cdrom();
