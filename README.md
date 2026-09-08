@@ -8,12 +8,6 @@ Live features:
 - **Boot media**: upload any ISO for the virtual CD-ROM, upload an existing raw disk image for the hard drive, or generate a blank hard drive image of (almost) any size on the fly.
 - **Runtime controls**: pause/resume, reset, fullscreen, save/restore machine state, eject/swap CD.
 
-## Deploying
-
-1. Push this repo to GitHub.
-2. Settings → Pages → Deploy from branch → pick `main` / `/ (root)` (or `/site` if you keep this folder nested — adjust accordingly).
-3. Visit the Pages URL. That's it — `libv86.js`, `v86.wasm`, and the SeaBIOS/Bochs VGA BIOS binaries are vendored in `build/` and `bios/`, so nothing is fetched from a third-party CDN at runtime.
-
 ## Why the 2GB thing doesn't limit your RAM
 
 Two totally different limits get conflated with v86:
@@ -40,3 +34,6 @@ bios/*.bin         SeaBIOS + Bochs VGA BIOS (from copy/v86)
 ```
 
 All vendored files are pulled directly from the official [copy/v86](https://github.com/copy/v86) project (BSD-2-Clause) and its npm distribution — nothing here is a fork of v86's core, just a configuration UI wrapped around it.
+
+
+yeah yeah yeah its made by AI but it WORKS and it's useful so haha
