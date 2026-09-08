@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v86 Emulator</title>
+<script src="build/libv86.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --accent-dim: #1f6feb;
+    --good: #3fb950;
+    --warn: #d29922;
+    --bad: #f85149;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+  }
+  #sidebar {
+    width: 380px;
+    min-width: 380px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 16px;
+    overflow-y: auto;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    min-width: 0;
+  }
+  h1 {
+    font-size: 15px;
+    margin: 0 0 4px 0;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  section {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #0d1117;
+  }
+  section h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin: 0 0 10px 0;
+    font-weight: 600;
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .row:last-child { margin-bottom: 0; }
+  input[type=range] {
+    flex: 1;
+    accent-color: var(--accent);
+  }
+  input[type=number], input[type=text], select {
+    background: #010409;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 12px;
+    width: 100%;
+  }
+  input[type=file] {
+    font-size: 11px;
+    color: var(--muted);
+    width: 100%;
+  }
+  .ram-display {
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    color: var(--accent);
+    min-width: 62px;
+    text-align: right;
+    font-weight: 600;
+  }
+  .preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .preset-btn {
+    flex: 1;
+    background: #010409;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 5px;
+    padding: 4px 0;
+    font-size: 10.5px;
+    cursor: pointer;
+  }
+  .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .preset-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.1); }
+  .tabs { display: flex; gap: 4px; margin-bottom: 10px; }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 11px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--muted);
+    background: #010409;
+  }
+  .tab.active { color: var(--accent); border-color: var(--accent); background: rgba(88,166,255,0.08); }
+  .tabpane { display: none; }
+  .tabpane.active { display: block; }
+  .hint { font-size: 10.5px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+  button.action {
+    width: 100%;
+    padding: 9px;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent-dim);
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  button.action:hover { background: var(--accent); }
+  button.action:disabled { background: #21262d; color: var(--muted); cursor: not-allowed; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; }
+  .btn-row button {
+    flex: 1;
+    padding: 7px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #010409;
+    color: var(--text);
+    font-size: 11.5px;
+    cursor: pointer;
+  }
+  .btn-row button:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-row button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .status-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+  .dot.ready { background: var(--good); }
+  .dot.busy { background: var(--warn); animation: pulse 1s infinite; }
+  .dot.error { background: var(--bad); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  #log {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px;
+    color: var(--muted);
+    max-height: 130px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.5;
+  }
+  #log .err { color: var(--bad); }
+  #log .ok { color: var(--good); }
+  progress {
+    width: 100%;
+    height: 5px;
+    accent-color: var(--accent);
+    margin-top: 6px;
+    display: none;
+  }
+
+  #screen_container {
+    background: #000;
+    box-shadow: 0 0 0 1px var(--border), 0 12px 40px rgba(0,0,0,0.5);
+    border-radius: 6px;
+    overflow: hidden;
+    line-height: 0;
+  }
+  #screen_container canvas, #screen_container div {
+    image-rendering: pixelated;
+  }
+  .top-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 960px;
+    margin-bottom: 10px;
+  }
+  .top-toolbar .stats {
+    font-size: 11px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    gap: 14px;
+  }
+  .placeholder {
+    width: 720px;
+    max-width: 90vw;
+    aspect-ratio: 4/3;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 20px;
+  }
+  a { color: var(--accent); }
+  .small-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 5px;
+    font-size: 10.5px;
+    padding: 3px 7px;
+    cursor: pointer;
+  }
+  .small-btn:hover { color: var(--accent); border-color: var(--accent); }
+  fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin: 0 0 10px 0; }
+  fieldset legend { font-size: 10.5px; color: var(--muted); padding: 0 4px; }
+  .checkrow { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 6px; }
+  .checkrow:last-child { margin-bottom: 0; }
+  .checkrow input { margin: 0; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <h1>🖥️ v86 Emulator</h1>
+  <div class="subtitle">x86 PC in your browser — runs entirely client-side</div>
+
+  <section>
+    <h2>Memory</h2>
+    <div class="row">
+      <input type="range" id="ramSlider" min="16" max="4096" step="16" value="256">
+      <span class="ram-display" id="ramDisplay">256 MB</span>
+    </div>
+    <div class="preset-row">
+      <button class="preset-btn" data-ram="64">64MB</button>
+      <button class="preset-btn active" data-ram="256">256MB</button>
+      <button class="preset-btn" data-ram="512">512MB</button>
+      <button class="preset-btn" data-ram="1024">1GB</button>
+      <button class="preset-btn" data-ram="2048">2GB</button>
+      <button class="preset-btn" data-ram="4096">4GB</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label style="flex:1;margin:0">Or type exact MB:</label>
+      <input type="number" id="ramExact" min="16" max="8192" step="1" value="256" style="width:90px">
+    </div>
+    <div class="hint">Emulated RAM is independent of the ~2GB browser ArrayBuffer limit that affects disk images — you can safely go well above 2GB here if your device has the memory to spare. Rounded up to a power of 2 internally.</div>
+  </section>
+
+  <section>
+    <h2>Boot Media</h2>
+    <div class="tabs">
+      <div class="tab active" data-tab="cdrom">CD-ROM (ISO)</div>
+      <div class="tab" data-tab="hdd">Hard Disk</div>
+    </div>
+
+    <div class="tabpane active" id="tab-cdrom">
+      <label>Upload an ISO image</label>
+      <input type="file" id="isoFile" accept=".iso,.img">
+      <div class="hint" id="isoInfo">No ISO selected. You can also boot with no CD if a bootable hard disk is attached.</div>
+    </div>
+
+    <div class="tabpane" id="tab-hdd">
+      <div class="tabs" style="margin-bottom:8px">
+        <div class="tab active" data-subtab="upload">Upload image</div>
+        <div class="tab" data-subtab="blank">Create blank</div>
+      </div>
+      <div class="tabpane active" id="sub-upload">
+        <label>Upload an existing disk image (.img/.raw/.qcow2*)</label>
+        <input type="file" id="hddFile" accept=".img,.raw,.qcow2,.vhd,.vdi,*">
+        <div class="hint" id="hddInfo">*Only raw disk images are supported natively. Large files stream lazily so they won't blow the 2GB ArrayBuffer ceiling.</div>
+      </div>
+      <div class="tabpane" id="sub-blank">
+        <label>New disk size</label>
+        <div class="row">
+          <input type="range" id="blankSlider" min="64" max="65536" step="64" value="2048">
+          <span class="ram-display" id="blankDisplay">2 GB</span>
+        </div>
+        <div class="preset-row">
+          <button class="preset-btn" data-blank="512">512MB</button>
+          <button class="preset-btn" data-blank="2048">2GB</button>
+          <button class="preset-btn" data-blank="8192">8GB</button>
+          <button class="preset-btn" data-blank="20480">20GB</button>
+          <button class="preset-btn" data-blank="65536">64GB</button>
+        </div>
+        <div class="hint">Built as a sparse lazily-backed image (a Blob composed of zero-chunks) — it does not allocate the full size in memory up front, so even a 64GB "disk" won't crash your tab. It will need formatting/partitioning from within the guest OS, or via an installer on the CD-ROM.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>System</h2>
+    <div class="row">
+      <label style="flex:1;margin:0">Boot order</label>
+      <select id="bootOrder" style="width:150px">
+        <option value="cd">CD-ROM first</option>
+        <option value="hd">Hard disk first</option>
+      </select>
+    </div>
+    <div class="checkrow">
+      <input type="checkbox" id="optNetworking">
+      <label style="margin:0" for="optNetworking">Enable networking relay (WSS)</label>
+    </div>
+    <div class="checkrow">
+      <input type="checkbox" id="optAcpi" checked>
+      <label style="margin:0" for="optAcpi">ACPI</label>
+    </div>
+    <fieldset style="margin-top:8px">
+      <legend>Networking relay URL (optional)</legend>
+      <input type="text" id="netRelay" placeholder="wss://relay.widgetry.org/" disabled>
+    </fieldset>
+  </section>
+
+  <section>
+    <button class="action" id="btnStart">▶ Build &amp; Start Emulator</button>
+    <div class="status-line"><span class="dot" id="statusDot"></span><span id="statusText">Idle — configure options above</span></div>
+    <progress id="progressBar"></progress>
+    <div id="log" style="margin-top:8px"></div>
+  </section>
+
+  <section id="runtimeControls" style="display:none">
+    <h2>Runtime</h2>
+    <div class="btn-row">
+      <button id="btnPause">⏸ Pause</button>
+      <button id="btnReset">↻ Reset</button>
+      <button id="btnFullscreen">⛶ Fullscreen</button>
+    </div>
+    <div class="btn-row">
+      <button id="btnSaveState">💾 Save State</button>
+      <button id="btnLoadState">📂 Load State</button>
+      <input type="file" id="stateFile" accept=".bin,.state" style="display:none">
+    </div>
+    <div class="btn-row">
+      <button id="btnEjectCd">⏏ Eject CD</button>
+      <button id="btnSwapCd">🔄 Swap CD</button>
+      <input type="file" id="swapCdFile" accept=".iso,.img" style="display:none">
+    </div>
+  </section>
+</div>
+
+<div id="main">
+  <div class="top-toolbar">
+    <div style="font-size:12px;color:var(--muted)" id="mainTitle">No machine running</div>
+    <div class="stats" id="statsBar"></div>
+  </div>
+  <div id="placeholder" class="placeholder">Configure your machine on the left, then hit<br><b>Build &amp; Start Emulator</b>.</div>
+  <div id="screen_container" style="display:none">
+    <div style="white-space: pre; font: 14px monospace; line-height: 14px; color: #ccc; padding: 4px;"></div>
+    <canvas style="display:none"></canvas>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ---------------- logging / status ---------------- */
+const logEl = document.getElementById("log");
+const statusDot = document.getElementById("statusDot");
+const statusText = document.getElementById("statusText");
+const progressBar = document.getElementById("progressBar");
+
+function log(msg, cls) {
+  const line = document.createElement("div");
+  if (cls) line.className = cls;
+  const t = new Date().toLocaleTimeString();
+  line.textContent = `[${t}] ${msg}`;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function setStatus(text, state) {
+  statusText.textContent = text;
+  statusDot.className = "dot" + (state ? " " + state : "");
+}
+
+/* ---------------- RAM slider ---------------- */
+const ramSlider = document.getElementById("ramSlider");
+const ramDisplay = document.getElementById("ramDisplay");
+const ramExact = document.getElementById("ramExact");
+const presetBtns = document.querySelectorAll(".preset-btn[data-ram]");
+
+function formatMB(mb) {
+  return mb >= 1024 ? (mb / 1024).toFixed(mb % 1024 === 0 ? 0 : 1) + " GB" : mb + " MB";
+}
+function syncRamUI(mb, source) {
+  ramDisplay.textContent = formatMB(mb);
+  if (source !== "slider") ramSlider.value = Math.min(mb, 4096);
+  if (source !== "exact") ramExact.value = mb;
+  presetBtns.forEach(b => b.classList.toggle("active", Number(b.dataset.ram) === mb));
+}
+ramSlider.addEventListener("input", () => syncRamUI(Number(ramSlider.value), "slider"));
+ramExact.addEventListener("input", () => {
+  let v = Number(ramExact.value) || 16;
+  v = Math.max(16, Math.min(8192, v));
+  syncRamUI(v, "exact");
+});
+presetBtns.forEach(b => b.addEventListener("click", () => syncRamUI(Number(b.dataset.ram))));
+
+/* ---------------- Blank disk size slider ---------------- */
+const blankSlider = document.getElementById("blankSlider");
+const blankDisplay = document.getElementById("blankDisplay");
+const blankPresets = document.querySelectorAll(".preset-btn[data-blank]");
+function formatMBLarge(mb) {
+  return mb >= 1024 ? (mb / 1024).toFixed(mb % 1024 === 0 ? 0 : 1) + " GB" : mb + " MB";
+}
+function syncBlankUI(mb) {
+  blankDisplay.textContent = formatMBLarge(mb);
+  blankSlider.value = mb;
+  blankPresets.forEach(b => b.classList.toggle("active", Number(b.dataset.blank) === mb));
+}
+blankSlider.addEventListener("input", () => syncBlankUI(Number(blankSlider.value)));
+blankPresets.forEach(b => b.addEventListener("click", () => syncBlankUI(Number(b.dataset.blank))));
+syncBlankUI(2048);
+
+/* ---------------- Tabs ---------------- */
+document.querySelectorAll(".tab[data-tab]").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab[data-tab]").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tabpane").forEach(p => {
+      if (p.id.startsWith("tab-")) p.classList.remove("active");
+    });
+    tab.classList.add("active");
+    document.getElementById("tab-" + tab.dataset.tab).classList.add("active");
+  });
+});
+document.querySelectorAll(".tab[data-subtab]").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab[data-subtab]").forEach(t => t.classList.remove("active"));
+    document.getElementById("sub-upload").classList.remove("active");
+    document.getElementById("sub-blank").classList.remove("active");
+    tab.classList.add("active");
+    document.getElementById("sub-" + tab.dataset.subtab).classList.add("active");
+  });
+});
+
+document.getElementById("isoFile").addEventListener("change", e => {
+  const f = e.target.files[0];
+  document.getElementById("isoInfo").textContent = f
+    ? `Selected: ${f.name} (${(f.size / 1024 / 1024).toFixed(1)} MB)`
+    : "No ISO selected.";
+});
+document.getElementById("hddFile").addEventListener("change", e => {
+  const f = e.target.files[0];
+  document.getElementById("hddInfo").textContent = f
+    ? `Selected: ${f.name} (${(f.size / 1024 / 1024).toFixed(1)} MB) — will stream lazily since v86 handles File-backed images natively.`
+    : "No image selected.";
+});
+document.getElementById("optNetworking").addEventListener("change", e => {
+  document.getElementById("netRelay").disabled = !e.target.checked;
+});
+
+/* ---------------- Sparse blank disk image ----------------
+   Builds a File-like Blob of the requested size WITHOUT allocating
+   the whole thing as a live ArrayBuffer. We compose it out of a
+   modest number of shared zero-filled chunk Blobs; the browser's
+   Blob storage handles the rest on disk/backing store, not in JS heap.
+   This mirrors the SparseFileBuffer approach used elsewhere in this
+   codebase to dodge the ~2GB ArrayBuffer ceiling. */
+function makeBlankDiskFile(sizeBytes, name) {
+  const CHUNK = 16 * 1024 * 1024; // 16MB shared zero chunk, reused by reference
+  const zeroChunk = new Blob([new Uint8Array(CHUNK)]);
+  const parts = [];
+  let remaining = sizeBytes;
+  while (remaining > 0) {
+    if (remaining >= CHUNK) {
+      parts.push(zeroChunk);
+      remaining -= CHUNK;
+    } else {
+      parts.push(new Blob([new Uint8Array(remaining)]));
+      remaining = 0;
+    }
+  }
+  return new File(parts, name, { type: "application/octet-stream" });
+}
+
+/* ---------------- Build & start ---------------- */
+let emulator = null;
+let statsInterval = null;
+
+const btnStart = document.getElementById("btnStart");
+btnStart.addEventListener("click", startEmulator);
+
+async function startEmulator() {
+  btnStart.disabled = true;
+  setStatus("Preparing boot media\u2026", "busy");
+  progressBar.style.display = "block";
+  progressBar.removeAttribute("value");
+  logEl.innerHTML = "";
+  log("Building configuration\u2026");
+
+  try {
+    const ramMB = Number(ramExact.value) || 256;
+    const memory_size = nextPow2(ramMB * 1024 * 1024);
+    log(`RAM: ${ramMB} MB requested \u2192 ${(memory_size / 1024 / 1024)} MB allocated (power of 2)`);
+
+    const config = {
+      wasm_path: "build/v86.wasm",
+      memory_size: memory_size,
+      vga_memory_size: 8 * 1024 * 1024,
+      screen_container: document.getElementById("screen_container"),
+      bios: { url: "bios/seabios.bin" },
+      vga_bios: { url: "bios/vgabios.bin" },
+      acpi: document.getElementById("optAcpi").checked,
+      autostart: true,
+      network_relay_url: document.getElementById("optNetworking").checked
+        ? (document.getElementById("netRelay").value || undefined)
+        : undefined,
+    };
+
+    // CD-ROM
+    const isoInput = document.getElementById("isoFile");
+    if (isoInput.files[0]) {
+      log(`Attaching CD-ROM: ${isoInput.files[0].name}`);
+      config.cdrom = { buffer: isoInput.files[0] };
+    }
+
+    // Hard disk
+    const hddSubtab = document.querySelector(".tab[data-subtab].active").dataset.subtab;
+    if (hddSubtab === "upload") {
+      const hddInput = document.getElementById("hddFile");
+      if (hddInput.files[0]) {
+        log(`Attaching uploaded hard disk: ${hddInput.files[0].name} (${(hddInput.files[0].size/1024/1024).toFixed(0)} MB)`);
+        config.hda = { buffer: hddInput.files[0] };
+      }
+    } else {
+      const blankMB = Number(blankSlider.value);
+      log(`Creating blank ${formatMBLarge(blankMB)} disk image (sparse, lazy-backed)\u2026`);
+      const blankFile = makeBlankDiskFile(blankMB * 1024 * 1024, "blank-disk.img");
+      config.hda = { buffer: blankFile, async: true };
+      log("Blank disk ready.", "ok");
+    }
+
+    // Boot order (v86 BootOrder enum): 0x123 = CD, then HD, then floppy.
+    // 0x132 = HD, then CD, then floppy.
+    const bootOrder = document.getElementById("bootOrder").value;
+    config.boot_order = bootOrder === "hd" ? 0x132 : 0x123;
+
+    if (!config.cdrom && !config.hda) {
+      log("No boot media attached \u2014 the machine will have nothing to boot from.", "err");
+    }
+
+    log("Instantiating V86\u2026");
+    setStatus("Booting\u2026", "busy");
+
+    document.getElementById("placeholder").style.display = "none";
+    document.getElementById("screen_container").style.display = "block";
+    document.getElementById("mainTitle").textContent = "Machine running";
+    document.getElementById("runtimeControls").style.display = "block";
+
+    emulator = new V86(config);
+
+    emulator.add_listener("emulator-ready", () => {
+      log("Emulator ready.", "ok");
+    });
+    emulator.add_listener("emulator-started", () => {
+      log("CPU running.", "ok");
+      setStatus("Running", "ready");
+      progressBar.style.display = "none";
+      startStats();
+    });
+    emulator.add_listener("download-progress", (e) => {
+      if (e.lengthComputable) {
+        progressBar.value = e.loaded;
+        progressBar.max = e.total;
+      }
+    });
+    emulator.add_listener("download-error", (e) => {
+      log(`Download error: ${JSON.stringify(e)}`, "err");
+      setStatus("Error loading media", "error");
+    });
+
+  } catch (err) {
+    console.error(err);
+    log("Fatal error: " + (err && err.message ? err.message : String(err)), "err");
+    setStatus("Failed to start", "error");
+    btnStart.disabled = false;
+  }
+}
+
+function nextPow2(n) {
+  let p = 1;
+  while (p < n) p *= 2;
+  return p;
+}
+
+function startStats() {
+  const statsBar = document.getElementById("statsBar");
+  let lastCount = null;
+  let lastTime = null;
+  if (statsInterval) clearInterval(statsInterval);
+  statsInterval = setInterval(() => {
+    if (!emulator || !emulator.is_running()) return;
+    try {
+      const count = emulator.get_instruction_counter();
+      const now = performance.now();
+      if (lastCount !== null) {
+        const deltaInstr = count - lastCount;
+        const deltaSec = (now - lastTime) / 1000;
+        const mips = (deltaInstr / deltaSec / 1e6).toFixed(1);
+        statsBar.textContent = `${mips} MIPS`;
+      }
+      lastCount = count;
+      lastTime = now;
+    } catch (e) { /* not fatal */ }
+  }, 2000);
+}
+
+/* ---------------- Runtime controls ---------------- */
+document.getElementById("btnPause").addEventListener("click", (e) => {
+  if (!emulator) return;
+  if (emulator.is_running()) {
+    emulator.stop();
+    e.target.textContent = "▶ Resume";
+    setStatus("Paused", "");
+  } else {
+    emulator.run();
+    e.target.textContent = "⏸ Pause";
+    setStatus("Running", "ready");
+  }
+});
+document.getElementById("btnReset").addEventListener("click", () => {
+  if (!emulator) return;
+  emulator.restart();
+  log("Machine reset.");
+});
+document.getElementById("btnFullscreen").addEventListener("click", () => {
+  const el = document.getElementById("screen_container");
+  if (el.requestFullscreen) el.requestFullscreen();
+});
+document.getElementById("btnSaveState").addEventListener("click", async () => {
+  if (!emulator) return;
+  log("Saving state\u2026");
+  try {
+    const state = await emulator.save_state();
+    const blob = new Blob([state]);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "v86-state.bin";
+    a.click();
+    log("State saved.", "ok");
+  } catch (err) {
+    log("Save failed: " + err.message, "err");
+  }
+});
+document.getElementById("btnLoadState").addEventListener("click", () => {
+  document.getElementById("stateFile").click();
+});
+document.getElementById("stateFile").addEventListener("change", async (e) => {
+  if (!emulator || !e.target.files[0]) return;
+  const buf = await e.target.files[0].arrayBuffer();
+  try {
+    await emulator.restore_state(buf);
+    log("State restored.", "ok");
+  } catch (err) {
+    log("Restore failed: " + err.message, "err");
+  }
+});
+document.getElementById("btnEjectCd").addEventListener("click", () => {
+  if (!emulator) return;
+  emulator.eject_cdrom();
+  log("CD-ROM ejected.");
+});
+document.getElementById("btnSwapCd").addEventListener("click", () => {
+  document.getElementById("swapCdFile").click();
+});
+document.getElementById("swapCdFile").addEventListener("change", async (e) => {
+  if (!emulator || !e.target.files[0]) return;
+  await emulator.set_cdrom({ buffer: e.target.files[0] });
+  log(`CD swapped: ${e.target.files[0].name}`, "ok");
+});
+</script>
+
+</body>
+</html>
